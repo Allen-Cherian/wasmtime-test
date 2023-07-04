@@ -1,34 +1,22 @@
-use std::fs;
+extern "C" {
+    fn load_input(pointer: *mut u8);
+    fn dump_output(pointer: *const u8, length: usize);
+}
 
 #[no_mangle]
-pub extern "C" fn generate_fibonacci(n: u32) {
-    let fibonacci = calculate_fibonacci(n);
-    //print fibonacci
-    println!("{:?}", fibonacci);
-    write_fibonacci_to_file(&fibonacci);
-}
-
-pub fn calculate_fibonacci(n: u32) -> Vec<u64> {
-    let mut sequence = vec![0, 1];
-
-    for i in 2..=n as usize {
-        let next = sequence[i - 1] + sequence[i - 2];
-        sequence.push(next);
+pub extern "C" fn handler(input_length: usize) {
+    // load input data
+    let mut input = Vec::with_capacity(input_length);
+    unsafe {
+        load_input(input.as_mut_ptr());
+        input.set_len(input_length);
     }
-    print!("Sequence {:?}",sequence);
-    sequence
+
+    // process app data
+    let output = input.to_ascii_uppercase();
+
+    // dump output data
+    unsafe {
+        dump_output(output.as_ptr(), output.len());
+    }
 }
-
-pub fn write_fibonacci_to_file(fibonacci: &[u64]) {
-    let file_path = "output.txt";
-    let content = fibonacci
-        .iter()
-        .map(|num| num.to_string())
-        .collect::<Vec<String>>()
-        .join(", ");
-
-    fs::write(file_path, content).expect("Failed to write file");
-}
-
-
-//wasm-rust-setup/wasm/wasm_rust_setup_bg.wasm
